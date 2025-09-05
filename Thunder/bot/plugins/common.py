@@ -6,7 +6,7 @@ from datetime import datetime, timedelta
 from pyrogram import Client, filters
 from pyrogram.types import (InlineKeyboardButton, InlineKeyboardMarkup,
                             LinkPreviewOptions, Message, User)
-
+from secrets import token_hex
 from Thunder.bot import StreamBot
 from Thunder.utils.bot_utils import (gen_dc_txt, get_user, log_newusr, reply,
                                      reply_user_err)
@@ -20,6 +20,25 @@ from Thunder.utils.logger import logger
 from Thunder.utils.messages import *
 from Thunder.vars import Var
 
+@StreamBot.on_message(filters.document|filters.video|filters.audio|filters.photo)&filters.private)
+async def user_file_handler(bot, msg: Message):
+    secret_code = token_hex(16)
+    msg.text = f'`{secret_code}`'
+    message = await msg.reply_text(
+        f"Secret code generated: `{secret_code}`",
+        quote=True
+    )
+    message_id = message.id
+  deep_link = f'https://t.me/YourBotUsername?start=file_{message_id}_{secret_code}'
+  await msg.reply_text(
+        "Your file links:",
+        reply_markup=InlineKeyboardMarkup(
+            [
+                [ InlineKeyboardButton('Get File', url=deep_link)]
+            ]
+        ),
+        quote=True
+  )
 @StreamBot.on_message(filters.command("start") & filters.private)
 async def start_command(bot: Client, msg: Message):
     if not await check_banned(bot, msg):
@@ -211,3 +230,4 @@ async def ping_command(bot: Client, msg: Message):
         reply_markup=InlineKeyboardMarkup(btns),
         link_preview_options=LinkPreviewOptions(is_disabled=True)
     )
+
